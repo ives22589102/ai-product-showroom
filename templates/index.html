@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 虛擬產品陳列室</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
+            max-width: 900px; 
+            margin: auto; 
+            padding: 20px; 
+            background-color: #f4f7f9;
+            color: #333;
+        }
+        h1, h2 { color: #1a2533; border-bottom: 2px solid #e0e6ec; padding-bottom: 10px;}
+        .step { background-color: #fff; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        
+        .case-selector { display: flex; gap: 20px; flex-wrap: wrap; }
+        .case-selector img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border: 4px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            background-color: #e0e6ec;
+        }
+        .case-selector img:hover { border-color: #a0b3c4; }
+        .case-selector img.selected { border-color: #007bff; box-shadow: 0 0 15px rgba(0, 123, 255, 0.5); }
+
+        .tag-group { margin-bottom: 15px; }
+        .tag-group h3 { margin-bottom: 10px; font-size: 1em; color: #555;}
+        .tag-group button {
+            background-color: #e0e6ec;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .tag-group button:hover { background-color: #c8d4e0; }
+        .tag-group button.active { background-color: #007bff; color: white; }
+
+        #generate-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            color: white;
+            background-color: #28a745;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #generate-btn:hover { background-color: #218838; }
+        #generate-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        #gallery { 
+            margin-top: 20px; 
+            border: 2px dashed #ccc; 
+            border-radius: 8px;
+            min-height: 500px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background-color: #fff;
+            padding: 10px;
+            position: relative;
+        }
+        #gallery .message { color: #888; }
+        #gallery #result-image { max-width: 100%; max-height: 100%; display: none; border-radius: 4px;}
+        #spinner { 
+            display: none; 
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        #actions-container {
+            display: none; /* 預設隱藏 */
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            color: white;
+            transition: opacity 0.2s;
+        }
+        .action-btn:hover { opacity: 0.85; }
+        .download-btn { background-color: #007bff; }
+        .share-fb-btn { background-color: #1877F2; }
+    </style>
+</head>
+<body>
+
+    <h1>AI 虛擬產品陳列室</h1>
+    <p>挑選您喜愛的機殼，搭配不同的風格標籤，創造您獨一無二的夢幻桌面！</p>
+    
+    <div class="step">
+        <h2>1. 選擇您的機殼</h2>
+        <div class="case-selector" id="case-selector">
+            <img src="/static/AP202_PBA_WHITE.png" alt="白色機殼" data-caseid="white_case" class="selected">
+            <img src="/static/pa401.png" alt="黑色機殼" data-caseid="black_case">
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>2. 選擇風格標籤</h2>
+        <div class="tag-group" id="scene-tags">
+            <h3>場景 (單選)</h3>
+            <button data-tag="scene_futuristic" class="active">未來冰晶</button>
+            <button data-tag="scene_cyberpunk">賽博龐克</button>
+            <button data-tag="scene_cozy">溫暖木質</button>
+        </div>
+        <!-- 【新增】氛圍標籤 -->
+        <div class="tag-group" id="ambiance-tags">
+            <h3>氛圍 (單選)</h3>
+            <button data-tag="ambiance_pro_gamer" class="active">專業電競</button>
+            <button data-tag="ambiance_streamer">實況直播</button>
+            <button data-tag="ambiance_minimalist">極簡主義</button>
+            <button data-tag="ambiance_lofi">Lofi放鬆</button>
+        </div>
+        <div class="tag-group" id="color-tags">
+            <h3>光線/色調 (單選)</h3>
+            <button data-tag="color_icy_blue" class="active">冰藍色調</button>
+            <button data-tag="color_neon">霓虹色調</button>
+            <button data-tag="color_sunset">溫暖夕陽</button>
+        </div>
+        <div class="tag-group" id="item-tags">
+            <h3>裝飾物 (多選)</h3>
+            <button data-tag="item_plants">綠色盆栽</button>
+            <button data-tag="item_cat">可愛貓咪</button>
+            <button data-tag="item_figures">動漫公仔</button>
+            <!-- 【新增】更多裝飾物 -->
+            <button data-tag="item_headphones">電競耳機</button>
+            <button data-tag="item_keyboard">客製化鍵盤</button>
+        </div>
+    </div>
+
+    <div class="step">
+        <h2>3. 生成場景</h2>
+        <button id="generate-btn">開始生成！</button>
+    </div>
+
+    <div id="gallery">
+        <p class="message" id="placeholder">生成後的圖片會顯示在這裡</p>
+        <img id="result-image" src="" alt="Generated Scene">
+        <p class="message" id="spinner">🤖 AI 正在繪製中，請稍候...</p>
+    </div>
+
+    <div id="actions-container">
+        <a id="download-btn" class="action-btn download-btn" href="#" download="my-ai-scene.png">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            下載圖片
+        </a>
+        <a id="share-fb-btn" class="action-btn share-fb-btn" href="#" target="_blank">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" style="margin-right: 8px;"><path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951z"/></svg>
+            分享到 Facebook
+        </a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const caseSelector = document.getElementById('case-selector');
+            const generateBtn = document.getElementById('generate-btn');
+            const gallery = document.getElementById('gallery');
+            const placeholder = document.getElementById('placeholder');
+            const resultImage = document.getElementById('result-image');
+            const spinner = document.getElementById('spinner');
+            const actionsContainer = document.getElementById('actions-container');
+            const downloadBtn = document.getElementById('download-btn');
+            const shareFbBtn = document.getElementById('share-fb-btn');
+            
+            let selectedCaseId = 'white_case';
+            caseSelector.addEventListener('click', (event) => {
+                if (event.target.tagName === 'IMG') {
+                    caseSelector.querySelectorAll('img').forEach(img => img.classList.remove('selected'));
+                    event.target.classList.add('selected');
+                    selectedCaseId = event.target.dataset.caseid;
+                }
+            });
+            
+            // 【重要更新】將 ambiance-tags 也加入單選群組
+            const singleSelectGroups = ['scene-tags', 'color-tags', 'ambiance-tags'];
+            document.querySelectorAll('.tag-group').forEach(group => {
+                group.addEventListener('click', (event) => {
+                    if (event.target.tagName === 'BUTTON') {
+                        const button = event.target;
+                        const isSingleSelect = singleSelectGroups.includes(group.id);
+                        if (isSingleSelect) {
+                            if (!button.classList.contains('active')) {
+                                group.querySelectorAll('button').forEach(btn => btn.classList.remove('active'));
+                                button.classList.add('active');
+                            }
+                        } else {
+                            button.classList.toggle('active');
+                        }
+                    }
+                });
+            });
+
+            generateBtn.addEventListener('click', async () => {
+                const selectedTags = [];
+                document.querySelectorAll('.tag-group button.active').forEach(btn => {
+                    selectedTags.push(btn.dataset.tag);
+                });
+
+                if (selectedTags.length === 0) {
+                    alert('請至少選擇一個風格標籤！');
+                    return;
+                }
+                
+                placeholder.style.display = 'none';
+                resultImage.style.display = 'none';
+                actionsContainer.style.display = 'none';
+                spinner.style.display = 'block';
+                generateBtn.disabled = true;
+                generateBtn.textContent = '生成中...';
+
+                const payload = {
+                    case_id: selectedCaseId,
+                    tags: selectedTags,
+                };
+
+                try {
+                    const response = await fetch('/generate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload),
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || `伺服器錯誤 (HTTP ${response.status})`);
+                    }
+
+                    const imageBlob = await response.blob();
+                    const imageUrl = URL.createObjectURL(imageBlob);
+                    
+                    resultImage.src = imageUrl;
+                    resultImage.style.display = 'block';
+
+                    downloadBtn.href = imageUrl;
+                    downloadBtn.download = `my-ai-scene-${Date.now()}.png`;
+
+                    const yourWebsiteURL = window.location.href; 
+                    const shareText = "快來看看我用 AI 為我的夢幻機殼創造的專屬場景！你也可以來玩玩看！";
+                    const facebookShareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(yourWebsiteURL)}&quote=${encodeURIComponent(shareText)}`;
+                    shareFbBtn.href = facebookShareUrl;
+
+                    actionsContainer.style.display = 'flex';
+
+                } catch (error) {
+                    alert('發生錯誤: ' + error.message);
+                    placeholder.style.display = 'block';
+                } finally {
+                    spinner.style.display = 'none';
+                    generateBtn.disabled = false;
+                    generateBtn.textContent = '開始生成！';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
